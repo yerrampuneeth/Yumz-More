@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Times New Roman", Times, serif;
+  --font-sans: "Times New Roman", Times, serif;
+  --color-brand-bg: #FFF9F8;
+  --color-brand-text: #3E2723;
+  --color-brand-heading: #2D1B18;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply antialiased bg-brand-bg text-brand-text italic font-serif;
+  }
+}

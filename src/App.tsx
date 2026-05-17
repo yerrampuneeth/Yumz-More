@@ -27,36 +27,51 @@ import { cn } from "@/src/lib/utils";
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("home");
 
   useEffect(() => {
-    const handleScroll = () => {
+    const onScroll = () => {
       setIsScrolled(window.scrollY > 50);
+      if (window.scrollY < 100) setActiveSection("home");
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const sectionIds = ["about", "menu", "offers", "contact"];
+    const observers: IntersectionObserver[] = [];
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
+        { rootMargin: "-35% 0px -60% 0px" }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
   }, []);
 
   const navLinks = [
-    { name: "Home", href: "#" },
-    { name: "About", href: "#about" },
-    { name: "Menu", href: "#menu" },
-    { name: "Offers", href: "#offers" },
-    { name: "Contact", href: "#contact" },
+    { name: "Home",    href: "#",        id: "home"    },
+    { name: "About",   href: "#about",   id: "about"   },
+    { name: "Menu",    href: "#menu",    id: "menu"    },
+    { name: "Offers",  href: "#offers",  id: "offers"  },
+    { name: "Contact", href: "#contact", id: "contact" },
   ];
 
   return (
     <nav className={cn(
       "fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-12 py-4",
-      isScrolled ? "bg-white/70 backdrop-blur-md shadow-sm border-b border-pink-100" : "bg-white/30 backdrop-blur-sm border-b border-white/20"
+      isScrolled ? "bg-white/85 backdrop-blur-md shadow-md border-b border-pink-100" : "bg-white/30 backdrop-blur-sm border-b border-white/20"
     )}>
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <a href="#" className="flex items-center gap-3 group">
           <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
-            {/* Outer Gradient Ring */}
             <div className="absolute inset-0 bg-gradient-to-tr from-pink-500 via-pink-400 to-yellow-400 rounded-full shadow-lg shadow-pink-200 group-hover:rotate-12 transition-transform duration-500" />
-            {/* Lace/Dashed Border Effect */}
             <div className="absolute inset-1 border-2 border-white/40 border-dashed rounded-full" />
-            {/* White Center */}
             <div className="absolute inset-[6px] bg-white rounded-full flex items-center justify-center shadow-inner">
               <span className="font-black text-lg bg-gradient-to-br from-pink-500 to-yellow-500 bg-clip-text text-transparent">YZ</span>
             </div>
@@ -68,63 +83,80 @@ const Navbar = () => {
         </a>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8 font-medium">
-          {navLinks.map((link) => (
-            <a 
-              key={link.name} 
-              href={link.href} 
-              className={cn(
-                "text-gray-600 hover:text-pink-500 transition-colors",
-                link.name === "Menu" && "text-pink-600 font-semibold"
-              )}
-            >
-              {link.name}
-            </a>
-          ))}
-          <a 
-            href="https://wa.me/917036758542" 
-            target="_blank" 
+        <div className="hidden md:flex items-center gap-1 font-medium">
+          {navLinks.map((link) => {
+            const isActive = activeSection === link.id;
+            return (
+              <a
+                key={link.name}
+                href={link.href}
+                className={cn(
+                  "relative px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200",
+                  isActive
+                    ? "text-pink-600 bg-pink-50"
+                    : "text-gray-500 hover:text-pink-500 hover:bg-pink-50/50"
+                )}
+              >
+                {link.name}
+                {isActive && (
+                  <motion.span
+                    layoutId="active-nav-dot"
+                    className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-pink-500 rounded-full"
+                  />
+                )}
+              </a>
+            );
+          })}
+          <a
+            href="https://wa.me/917036758542"
+            target="_blank"
             rel="noreferrer"
-            className="bg-[#25D366] text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+            className="ml-4 bg-pink-600 text-white px-5 py-2.5 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-pink-700 transition-all flex items-center gap-2 text-sm"
           >
-            <MessageCircle size={20} />
-            Book Now
+            <MessageCircle size={16} />
+            Order Now
           </a>
         </div>
 
         {/* Mobile Toggle */}
-        <button 
-          className="md:hidden text-gray-600"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
+        <button className="md:hidden text-gray-600" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
 
       {/* Mobile Nav */}
       {isMenuOpen && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-full left-0 right-0 bg-white shadow-xl p-6 flex flex-col gap-4 md:hidden border-t"
+          className="absolute top-full left-0 right-0 bg-white shadow-xl p-6 flex flex-col gap-2 md:hidden border-t border-pink-50"
         >
-          {navLinks.map((link) => (
-            <a 
-              key={link.name} 
-              href={link.href} 
-              className="text-gray-600 hover:text-pink-500 font-medium transition-colors border-b border-gray-50 pb-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {link.name}
-            </a>
-          ))}
-          <a 
-            href="https://wa.me/917036758542" 
+          {navLinks.map((link) => {
+            const isActive = activeSection === link.id;
+            return (
+              <a
+                key={link.name}
+                href={link.href}
+                onClick={() => setIsMenuOpen(false)}
+                className={cn(
+                  "px-4 py-3 rounded-xl font-semibold transition-colors",
+                  isActive
+                    ? "text-pink-600 bg-pink-50"
+                    : "text-gray-600 hover:text-pink-500 hover:bg-gray-50"
+                )}
+              >
+                {link.name}
+              </a>
+            );
+          })}
+          <a
+            href="https://wa.me/917036758542"
             target="_blank"
             rel="noreferrer"
-            className="bg-pink-600 text-white px-5 py-3 rounded-xl font-semibold text-center hover:bg-pink-700 transition-all"
+            className="mt-2 bg-pink-600 text-white px-5 py-3 rounded-xl font-semibold text-center hover:bg-pink-700 transition-all flex items-center justify-center gap-2"
           >
-            Order on WhatsApp
+            <MessageCircle size={18} />
+            Order Now
           </a>
         </motion.div>
       )}
@@ -158,7 +190,7 @@ const Hero = () => {
               className="px-8 py-4 bg-pink-600 text-white rounded-2xl font-bold text-lg hover:bg-pink-700 transition-all shadow-xl hover:shadow-pink-200 flex items-center gap-2 active:scale-95"
             >
               <MessageCircle size={22} />
-              Book Now
+              Order Now
             </a>
             <a 
               href="#menu" 
@@ -193,8 +225,8 @@ const Hero = () => {
         >
           <div className="relative z-10 w-full aspect-square rounded-[2rem] overflow-hidden shadow-2xl skew-y-1">
              <img 
-               src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1000&auto=format&fit=crop" 
-               alt="Gourmet Cake" 
+               src="/butterscotch-cupcake.png" 
+               alt="Yumz N More Butterscotch Nuts Cup Cake" 
                className="w-full h-full object-cover"
              />
           </div>
@@ -309,23 +341,127 @@ const About = () => {
 };
 
 const MenuSection = () => {
+  const [activeCategory, setActiveCategory] = useState("All");
+  const categories = ["All", "Cup Cakes", "Jar Cakes", "Glass Cakes", "Milkshakes", "Special"];
+
   const items = [
-    { name: "Cup Cakes", category: "Desserts", price: "₹50", image: "https://images.unsplash.com/photo-1599785209796-786432b228bc?q=80&w=800", desc: "Chocolate Delight, Pineapple, Dark Forest, Butterscotch" },
-    { name: "Jar Cakes", category: "Desserts", price: "₹80", image: "https://images.unsplash.com/photo-1587314168485-3236d6710814?q=80&w=800", desc: "Freshly layered homemade goodness in a jar" },
-    { name: "Mulberry Delight", category: "Desserts", price: "₹90", image: "https://images.unsplash.com/photo-1603532648955-039310d9ed75?q=80&w=800", desc: "Our signature seasonal specialty" },
-    { name: "Pista Sip", category: "Drinks", price: "₹40", image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=800", desc: "Rich and creamy pista flavored thick shake" },
-    { name: "Almond Fresh", category: "Drinks", price: "₹40", image: "https://images.unsplash.com/photo-1556881286-fc6915169721?q=80&w=800", desc: "Refreshing Badam milk with real nuts" },
-    { name: "Choco Magic", category: "Drinks", price: "₹40", image: "https://images.unsplash.com/photo-1541658016709-82535e94bc69?q=80&w=800", desc: "The ultimate chocolate indulgence" },
-    { name: "Combo Pack / Hamper", category: "Special", price: "₹399", image: "https://images.unsplash.com/photo-1549462980-6a034227ad64?q=80&w=800", desc: "Perfect for gifting and celebrations" },
+    {
+      name: "Butterscotch Nuts Cup Cake",
+      category: "Cup Cakes",
+      price: "₹50",
+      image: "/butterscotch-cupcake.png",
+      desc: "Soft sponge cake with rich butterscotch cream frosting, topped with crunchy roasted butterscotch nut pieces. Pure joy in every bite!",
+      badge: "🏆 Bestseller",
+    },
+    {
+      name: "Chocolate Cup Cake",
+      category: "Cup Cakes",
+      price: "₹50",
+      image: "/chocolate-cupcake.png",
+      desc: "Moist chocolate cake layered with rich chocolate cream, drizzled with dark chocolate sauce and oreo crumb base.",
+      badge: "❤️ Fan Favourite",
+    },
+    {
+      name: "Red Velvet Cup Cake",
+      category: "Cup Cakes",
+      price: "₹50",
+      image: "/red-velvet-cupcake.png",
+      desc: "Classic red velvet cake with smooth cream cheese frosting, topped with vibrant red velvet crumbles. Love at first bite!",
+      badge: "💕 Must Try",
+    },
+    {
+      name: "Red Velvet Jar Cake",
+      category: "Jar Cakes",
+      price: "₹80",
+      image: "/jar-cakes.png",
+      desc: "Layers of moist red velvet cake and smooth cream in a tall transparent cup. Fresh, homemade, and hygienic. FSSAI certified!",
+      badge: "🍰 New",
+    },
+    {
+      name: "Black Forest Jar Cake",
+      category: "Jar Cakes",
+      price: "₹80",
+      image: "/jar-cakes.png",
+      desc: "Rich black forest layers — dark chocolate cake, whipped cream and cocoa crumble topping in a convenient sealed jar cup.",
+      badge: "🌲 Popular",
+    },
+    {
+      name: "Chocolate Glass Cake",
+      category: "Glass Cakes",
+      price: "₹90",
+      image: "/chocolate-glass-cake.png",
+      desc: "Layers of chocolate happiness — moist chocolate cake crumbs alternating with whipped cream and chocolate shavings in a tall see-through cup.",
+      badge: "✨ Signature",
+    },
+    {
+      name: "Mulberry Delight",
+      category: "Special",
+      price: "₹90",
+      image: "/mulberry-delight.png",
+      desc: "Our signature seasonal specialty — creamy dessert bowl topped with fresh juicy mulberries. Irresistibly smooth, sweet and refreshing!",
+      badge: "🫐 Seasonal",
+    },
+    {
+      name: "Pista Sip",
+      category: "Milkshakes",
+      price: "₹40",
+      image: "/pista-sip.png",
+      desc: "Rich and creamy pistachio thick shake with real pista, served in our signature Yumz & More cup. Refreshingly indulgent!",
+      badge: "🌿 Fresh",
+    },
+    {
+      name: "Almond Fresh",
+      category: "Milkshakes",
+      price: "₹40",
+      image: "/almond-fresh.png",
+      desc: "Pure almond milk — sweetened, nourishing and delicious. Made with real almonds and served fresh in our branded cup.",
+      badge: "💪 Healthy",
+    },
+    {
+      name: "Choco Magic",
+      category: "Milkshakes",
+      price: "₹40",
+      image: "/choco-magic.png",
+      desc: "Rich, creamy, irresistible — premium cocoa chocolate milkshake. Indulge. Refresh. Repeat. The ultimate choco bliss!",
+      badge: "☕ Rich",
+    },
+    {
+      name: "Hamper Combo Pack",
+      category: "Special",
+      price: "₹399",
+      image: "/hamper-combo.png",
+      desc: "Curated gift hamper with our bestselling cupcakes and milkshakes beautifully packed in a golden organza bag. Perfect for every occasion!",
+      badge: "🎁 Gift Special",
+    },
   ];
+
+  const filtered = activeCategory === "All" ? items : items.filter(i => i.category === activeCategory);
 
   return (
     <section id="menu" className="py-24 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6">
         <SectionHeading title="Our Signature Menu" subtitle="Delicious Hits" />
+
+        {/* Category Filter Tabs */}
+        <div className="flex flex-wrap justify-center gap-3 mb-12 -mt-4">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={cn(
+                "px-5 py-2 rounded-full font-semibold text-sm transition-all border",
+                activeCategory === cat
+                  ? "bg-pink-600 text-white border-pink-600 shadow-lg shadow-pink-200"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-pink-300 hover:text-pink-500"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {items.map((item, index) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filtered.map((item, index) => {
             const colors = [
               "bg-[#FDE7F3] border-pink-100", 
               "bg-[#ECFDF5] border-emerald-100", 
@@ -336,37 +472,53 @@ const MenuSection = () => {
             
             return (
               <motion.div
-                key={index}
+                key={item.name}
+                layout
                 initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -10 }}
+                transition={{ delay: index * 0.07 }}
+                whileHover={{ y: -8 }}
                 className={cn(
-                  "rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all border group flex flex-col",
+                  "rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all border group flex flex-col",
                   bgColorClass,
-                  item.name === "Combo Pack / Hamper" && "md:col-span-2 lg:col-span-1"
+                  item.category === "Special" && "sm:col-span-2 lg:col-span-1"
                 )}
               >
-                <div className="h-64 overflow-hidden relative">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                  <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm px-4 py-1 rounded-full text-xs font-bold text-gray-800 shadow-sm border border-white/20">
+                <div className="h-56 overflow-hidden relative">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600";
+                    }}
+                  />
+                  {/* Badge */}
+                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-bold text-gray-800 shadow-sm">
+                    {item.badge}
+                  </div>
+                  {/* Category pill */}
+                  <div className="absolute top-3 right-3 bg-pink-600/90 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-bold text-white shadow-sm">
                     {item.category}
                   </div>
                 </div>
-                <div className="p-8 flex-1 flex flex-col">
+                <div className="p-6 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xl font-bold text-brand-heading pr-4">{item.name}</h3>
-                    <span className="text-pink-600 font-bold text-lg shrink-0">{item.price}</span>
+                    <h3 className="text-base font-bold text-brand-heading pr-2 leading-snug">{item.name}</h3>
+                    <span className="text-pink-600 font-extrabold text-xl shrink-0">{item.price}</span>
                   </div>
-                  <p className="text-gray-600 text-sm mb-6 flex-1">{item.desc}</p>
+                  <p className="text-gray-500 text-sm mb-5 flex-1 leading-relaxed">{item.desc}</p>
                   <a 
-                    href={`https://wa.me/917036758542?text=Hi, I want to order ${item.name}`}
+                    href={`https://wa.me/917036758542?text=Hi! I want to order ${item.name} (${item.price})`}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full py-4 bg-white/80 backdrop-blur-sm text-gray-900 border border-white/50 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-pink-600 hover:text-white hover:border-pink-600 transition-all shadow-sm"
+                    className="w-full py-3 bg-white/80 backdrop-blur-sm text-gray-900 border border-white/50 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-pink-600 hover:text-white hover:border-pink-600 transition-all shadow-sm"
                   >
-                    Order on WhatsApp
+                    <MessageCircle size={16} />
+                    Order Now
                   </a>
                 </div>
               </motion.div>
@@ -375,19 +527,16 @@ const MenuSection = () => {
         </div>
         
         <div className="mt-16 text-center">
-           <div className="inline-block p-1 bg-white rounded-2xl shadow-sm border border-gray-100">
-             <div className="flex flex-wrap items-center gap-4 px-6 py-4">
-                <div className="flex items-center gap-2 px-4 py-2 bg-pink-50 rounded-xl text-pink-700 font-bold text-sm">
-                  <Coffee size={18} /> Thick Shakes
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-yellow-50 rounded-xl text-yellow-700 font-bold text-sm">
-                  <Cake size={18} /> Jar Cakes
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-xl text-blue-700 font-bold text-sm">
-                  <IceCream size={18} /> Fresh Milk
-                </div>
-             </div>
-           </div>
+          <p className="text-gray-500 font-medium mb-4">Looking for bulk orders or special combos?</p>
+          <a 
+            href="https://wa.me/917036758542?text=Hi! I need help with bulk order / custom combo"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-pink-600 text-white rounded-2xl font-bold hover:bg-pink-700 transition-all shadow-xl hover:shadow-pink-200"
+          >
+            <MessageCircle size={20} />
+            Chat for Custom Orders
+          </a>
         </div>
       </div>
     </section>
@@ -543,7 +692,7 @@ const FloatingWhatsApp = () => {
     >
       <MessageCircle size={32} />
       <span className="absolute -top-2 -left-2 bg-pink-600 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-bounce">
-        Book Now
+        Order Now
       </span>
     </motion.a>
   );
